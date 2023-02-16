@@ -1,15 +1,32 @@
 import os
 
-from cs50 import SQL
+from settingDB import notion, engine
 from flask import Flask, flash, redirect, render_template, request, session
 from flask_session import Session
 from tempfile import mkdtemp
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from helpers import apology, login_required, lookup, usd
+from helpers import apology, login_required, usd
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, scoped_session
+from datetime import datetime, timedelta, timezone
+
+JST = timezone(timedelta(hours=+9), 'JST')
+datetime.now(JST)
+# engine = create_engine("sqlite:///application.db", echo=True)
+
+Session = scoped_session(
+    sessionmaker(
+        autocommit=False,
+        autoflush=False,
+        bind=engine
+    )
+)
 
 # Configure application
 app = Flask(__name__)
+session = Session()
 
 # Ensure templates are auto-reloaded
 app.config["TEMPLATES_AUTO_RELOAD"] = True
@@ -20,10 +37,10 @@ app.jinja_env.filters["usd"] = usd
 # Configure session to use filesystem (instead of signed cookies)
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
-Session(app)
+# Session(app)
 
 # Configure CS50 Library to use SQLite database
-db = SQL("sqlite:///finance.db")
+# db = SQL("sqlite:///application.db")
 
 # Make sure API key is set
 if not os.environ.get("API_KEY"):
@@ -60,16 +77,16 @@ def buy():
             return apology("must provide username", 400)
 
         # 正の整数の株を買う
-        if not isdigit(request.form.get("shares")):
+        if not request.form.get("shares"):
             return apology("must provide username", 400)
 
         # 所持金額を調べて持っていれば購入しよう
-        hadCash = db.execute("SELECT cash FROM users WHERE id=?", session["user_id"])
-        payment = symbolData["price"] * request.form.get("shares")
-        if hadCash >= payment:
-            db.execute("UPDATE user SET cash=? WHERE username=?", hadCash - payment, session["user_id"])
-        else:
-            return apology("faild buying", 400)
+        # hadCash = db.execute("SELECT cash FROM users WHERE id=?", session["user_id"])
+        # payment = symbolData["price"] * request.form.get("shares")
+        # if hadCash >= payment:
+        #     db.execute("UPDATE user SET cash=? WHERE username=?", hadCash - payment, session["user_id"])
+        # else:
+        #     return apology("faild buying", 400)
 
         flash("bought!")
         return redirect("/")
@@ -91,7 +108,7 @@ def login():
     """Log user in"""
 
     # Forget any user_id
-    session.clear()
+    # session.clear()
 
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
@@ -105,14 +122,14 @@ def login():
             return apology("must provide password", 403)
 
         # Query database for username
-        rows = db.execute("SELECT * FROM users WHERE username = ?", request.form.get("username"))
+        # rows = db.execute("SELECT * FROM users WHERE username = ?", request.form.get("username"))
 
         # Ensure username exists and password is correct
-        if len(rows) != 1 or not check_password_hash(rows[0]["hash"], request.form.get("password")):
-            return apology("invalid username and/or password", 403)
+        # if len(rows) != 1 or not check_password_hash(rows[0]["hash"], request.form.get("password")):
+        #     return apology("invalid username and/or password", 403)
 
-        # Remember which user has logged in
-        session["user_id"] = rows[0]["id"]
+        # # Remember which user has logged in
+        # session["user_id"] = rows[0]["id"]
 
         # Redirect user to home page
         return redirect("/")
@@ -164,7 +181,7 @@ def register():
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
 
-        rows = db.execute("SELECT * FROM users WHERE username = ?", request.form.get("username"))
+        # rows = db.execute("SELECT * FROM users WHERE username = ?", request.form.get("username"))
 
         # Ensure username was submitted
         if not request.form.get("username"):
@@ -178,15 +195,15 @@ def register():
         elif not request.form.get("password") == request.form.get("confirmation"):
             return apology("invalid username and/or password", 400)
 
-        # すでにユーザー名が使われていないか
-        elif len(rows) :
-            return apology("invalid username and/or password", 400)
+        # # すでにユーザー名が使われていないか
+        # elif len(rows) :
+        #     return apology("invalid username and/or password", 400)
 
-        # Query database for username
-        hash = generate_password_hash(request.form.get("password"))
-        user_id = db.execute("INSERT INTO users (username, hash) VALUES (?, ?)" ,request.form.get("username") ,hash)
+        # # Query database for username
+        # hash = generate_password_hash(request.form.get("password"))
+        # user_id = db.execute("INSERT INTO users (username, hash) VALUES (?, ?)" ,request.form.get("username") ,hash)
 
-        session["user_id"] = user_id
+        # session["user_id"] = user_id
 
         flash("registered!")
         return redirect("/")

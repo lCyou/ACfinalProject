@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 JST = timezone(timedelta(hours=+9), 'JST')
 datetime.now(JST)
 
-engine = sqlalchemy.create_engine('sqlite:///application.db', echo=True)
+engine = sqlalchemy.create_engine('sqlite:///manipulateDB/application.db', echo=True)
 Base = declarative_base()
 
 class notion(Base):

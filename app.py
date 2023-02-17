@@ -1,6 +1,6 @@
 import os
 
-from manipurateDB.settingDB import notion, engine
+from manipulateDB.settingDB import notion, engine
 from flask import Flask, flash, redirect, render_template, request, session
 from flask_session import Session
 from tempfile import mkdtemp
